@@ -1,17 +1,55 @@
+import axios from "axios";
 import { useEffect, useState } from "react";
 import Line from "./Components/Line";
-
+import { isLetter } from "./Utilities/helpers";
 function App() {
   const [solution, setsolution] = useState("");
   const [rows, setRows] = useState(Array(6).fill(null));
+  const [currentGuess, setCurrentGuess] = useState("");
+  const [gameOver, setGameOver] = useState(false);
+  useEffect(() => {
+    const handleKeyPress = (event) => {
+      if (gameOver) {
+        return;
+      }
+
+      console.log(event.key);
+      if (event.key === "Enter") {
+        const isCorrect = solution === currentGuess;
+        if (isCorrect) {
+          setGameOver(true);
+        }
+      }
+
+      // Handling Backspace ie removing the latest character
+      if (event.key === "Backspace") {
+        setCurrentGuess(currentGuess.slice(0, -1));
+        return;
+      }
+
+      if (isLetter(event.key) && currentGuess.length < 5) {
+        setCurrentGuess((oldGuess) => oldGuess + event.key);
+        return;
+      }
+    };
+    window.addEventListener("keydown", handleKeyPress);
+
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [solution, gameOver,currentGuess]);
   useEffect(() => {
     const fetchWord = async () => {
-      const response = await fetch(
-        `https://api.frontendexpert.io/api/fe/wordle-words`
-      );
-      const words = response.json();
-      const SelectedWord = words[Math.floor(Math.random() * words.length)];
-      setsolution(SelectedWord);
+      axios
+        .get("https://api.frontendexpert.io/api/fe/wordle-words", {
+          headers: {
+            "Contend-Type": "application/x-www-form-urlencoded",
+            "Access-Control-Allow-Origin": true,
+          },
+        })
+        .then((response) => {
+          const words = response.json();
+          const SelectedWord = words[Math.floor(Math.random() * words.length)];
+          setsolution(SelectedWord.toLowerCase());
+        });
     };
 
     fetchWord();
@@ -22,10 +60,18 @@ function App() {
       <h1 className="text-4xl font-medium text-center mx-auto text-gray-700">
         Wordle
       </h1>
-      <div className=" flex flex-col gap-2">
-        {rows.map((row, i) => (
-          <Line key={i} Guess={" "} solution={solution} />
-        ))}
+      <div className=" flex flex-col gap-2 mx-auto mt-10">
+        {rows.map((row, i) => {
+          const isCurrentGuess = i === rows.findIndex((row) => row === null);
+          return (
+            <Line
+              key={i}
+              Guess={isCurrentGuess ? currentGuess : row || " "}
+              solution={solution}
+            />
+          );
+        })}
+        {currentGuess}
       </div>
     </div>
   );
