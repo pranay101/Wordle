@@ -3,22 +3,31 @@ import { useEffect, useState } from "react";
 import Line from "./Components/Line";
 import { isLetter } from "./Utilities/helpers";
 function App() {
-  const [solution, setsolution] = useState("");
+  const [solution, setsolution] = useState("hello");
   const [rows, setRows] = useState(Array(6).fill(null));
   const [currentGuess, setCurrentGuess] = useState("");
-  const [gameOver, setGameOver] = useState(false);
+  const [isGameOver, setisGameOver] = useState(false);
   useEffect(() => {
     const handleKeyPress = (event) => {
-      if (gameOver) {
+
+
+      if (isGameOver) {
         return;
       }
 
       console.log(event.key);
       if (event.key === "Enter") {
+
         const isCorrect = solution === currentGuess;
         if (isCorrect) {
-          setGameOver(true);
+          setisGameOver(true);
+          return
         }
+
+        const tempRows = [...rows]
+        tempRows[rows.findIndex(row => row ==null)] = currentGuess;
+        setRows(tempRows)
+        setCurrentGuess("")
       }
 
       // Handling Backspace ie removing the latest character
@@ -35,7 +44,7 @@ function App() {
     window.addEventListener("keydown", handleKeyPress);
 
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [solution, gameOver,currentGuess]);
+  }, [solution, isGameOver,currentGuess,rows]);
   useEffect(() => {
     const fetchWord = async () => {
       axios
